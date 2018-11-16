@@ -3,8 +3,7 @@
 properties([[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator', numToKeepStr: '10']]])
 
 stage('build') {
-    agent {label 'unix'}
-    node {
+    node('unix')  {
         checkout scm
         def v = version()
         currentBuild.displayName = "${env.BRANCH_NAME}-${v}-${env.BUILD_NUMBER}"
@@ -13,8 +12,7 @@ stage('build') {
 }
 
 stage('build docker image') {
-    agent {label 'unix'}
-    node {
+    node('unix') {
         mvn "clean package docker:build -DskipTests"
     }
 }
@@ -24,13 +22,12 @@ def branch_deployment_environment = get_branch_deployment_environment branch_typ
 
 if (branch_deployment_environment) {
     stage('deploy') {
-        agent {label 'unix'}
         if (branch_deployment_environment == "prod") {
             timeout(time: 1, unit: 'DAYS') {
                 input "Deploy to ${branch_deployment_environment} ?"
             }
         }
-        node {
+        node('unix') {
             sh "echo Deploying to ${branch_deployment_environment}"
             //TODO specify the deployment
         }
@@ -38,8 +35,7 @@ if (branch_deployment_environment) {
 
     if (branch_deployment_environment != "prod") {
         stage('integration tests') {
-            agent {label 'unix'}
-            node {
+            node('unix') {
                 sh "echo Running integration tests in ${branch_deployment_environment}"
                 //TODO do the actual tests
             }
@@ -49,11 +45,10 @@ if (branch_deployment_environment) {
 
 if (branch_type == "dev") {
     stage('start release') {
-        agent {label 'unix'}
         timeout(time: 1, unit: 'HOURS') {
             input "Do you want to start a release?"
         }
-        node {
+        node('unix') {
             sshagent(['f1ad0f5d-df0d-441a-bea0-fd2c34801427']) {
                 mvn("jgitflow:release-start")
             }
@@ -63,11 +58,10 @@ if (branch_type == "dev") {
 
 if (branch_type == "release") {
     stage('finish release') {
-        agent {label 'unix'}
         timeout(time: 1, unit: 'HOURS') {
             input "Is the release finished?"
         }
-        node {
+        node('unix') {
             sshagent(['f1ad0f5d-df0d-441a-bea0-fd2c34801427']) {
                 mvn("jgitflow:release-finish -Dmaven.javadoc.skip=true -DnoDeploy=true")
             }
@@ -77,11 +71,10 @@ if (branch_type == "release") {
 
 if (branch_type == "hotfix") {
     stage('finish hotfix') {
-        agent {label 'unix'}
         timeout(time: 1, unit: 'HOURS') {
             input "Is the hotfix finished?"
         }
-        node {
+        node('unix') {
             sshagent(['f1ad0f5d-df0d-441a-bea0-fd2c34801427']) {
                 mvn("jgitflow:hotfix-finish -Dmaven.javadoc.skip=true -DnoDeploy=true")
             }
