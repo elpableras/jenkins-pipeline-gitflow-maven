@@ -2,6 +2,8 @@
 
 properties([[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator', numToKeepStr: '10']]])
 
+agent {label 'unix'}
+
 stage('build') {
     node {
         checkout scm
