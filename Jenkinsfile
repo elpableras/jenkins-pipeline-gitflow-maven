@@ -2,9 +2,8 @@
 
 properties([[$class: 'BuildDiscarderProperty', strategy: [$class: 'LogRotator', numToKeepStr: '10']]])
 
-agent {label 'unix'}
-
 stage('build') {
+    agent {label 'unix'}
     node {
         checkout scm
         def v = version()
@@ -14,6 +13,7 @@ stage('build') {
 }
 
 stage('build docker image') {
+    agent {label 'unix'}
     node {
         mvn "clean package docker:build -DskipTests"
     }
@@ -24,6 +24,7 @@ def branch_deployment_environment = get_branch_deployment_environment branch_typ
 
 if (branch_deployment_environment) {
     stage('deploy') {
+        agent {label 'unix'}
         if (branch_deployment_environment == "prod") {
             timeout(time: 1, unit: 'DAYS') {
                 input "Deploy to ${branch_deployment_environment} ?"
@@ -37,6 +38,7 @@ if (branch_deployment_environment) {
 
     if (branch_deployment_environment != "prod") {
         stage('integration tests') {
+            agent {label 'unix'}
             node {
                 sh "echo Running integration tests in ${branch_deployment_environment}"
                 //TODO do the actual tests
@@ -47,6 +49,7 @@ if (branch_deployment_environment) {
 
 if (branch_type == "dev") {
     stage('start release') {
+        agent {label 'unix'}
         timeout(time: 1, unit: 'HOURS') {
             input "Do you want to start a release?"
         }
@@ -60,6 +63,7 @@ if (branch_type == "dev") {
 
 if (branch_type == "release") {
     stage('finish release') {
+        agent {label 'unix'}
         timeout(time: 1, unit: 'HOURS') {
             input "Is the release finished?"
         }
@@ -73,6 +77,7 @@ if (branch_type == "release") {
 
 if (branch_type == "hotfix") {
     stage('finish hotfix') {
+        agent {label 'unix'}
         timeout(time: 1, unit: 'HOURS') {
             input "Is the hotfix finished?"
         }
